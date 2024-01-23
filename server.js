@@ -1,6 +1,9 @@
 const express = require('express')
 const { GenerateJWT, VerifyJWT, verifyAccessToken, signAccessToken } = require('./services/jwt.service')
 require('dotenv').config()
+const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
 
 const app = express()
 app.use(express.json())
@@ -16,6 +19,47 @@ app.get('/', async (req, res) => {
     const token = await signAccessToken(data)
     res.header('Authorization', 'Bearer '+ token)
     res.send(token)
+})
+
+app.get('/test', async (req, res) => {
+
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 4096,
+        publicKeyEncoding: {
+            type: 'pkcs1',
+            format: 'pem'
+        },
+        privateKeyEncoding: {
+            type: 'pkcs1',
+            format: 'pem'
+        }
+    })
+
+    const payload = {
+        username: 'phucuong.vo'
+    }
+
+    const accessToken = await jwt.sign(payload, privateKey, {
+        algorithm: 'RS256',
+        expiresIn: '2 days'
+    })
+
+    const refreshToken = await jwt.sign( payload, privateKey, {
+        algorithm: 'RS256',
+        expiresIn: '7 days'
+    })
+
+    jwt.verify(accessToken, publicKey, (err, decode) => {
+        if(err){
+            console.error(`error verify:: ${err}`)
+        }else{
+            console.log(`decode verify:: ${decode}`)
+        }
+    })
+
+    console.log({accessToken, refreshToken})
+   
+    res.send('haha')
 })
 
 app.post('/verify', async (req, res) => {
@@ -39,7 +83,7 @@ app.post('/verify', async (req, res) => {
 })
 
 
-const port = 3000
+const port = 5000
 app.listen(port, () => {
     console.log(`App is listening at port: ${port}`)
 })
