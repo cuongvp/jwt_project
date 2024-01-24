@@ -39,27 +39,35 @@ app.get('/test', async (req, res) => {
         username: 'phucuong.vo'
     }
 
-    const accessToken = await jwt.sign(payload, privateKey, {
-        algorithm: 'RS256',
-        expiresIn: '2 days'
-    })
+    let data = undefined
 
-    const refreshToken = await jwt.sign( payload, privateKey, {
-        algorithm: 'RS256',
-        expiresIn: '7 days'
-    })
+    try{
+        const accessToken = await jwt.sign(payload, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: '2 days'
+        })
 
-    jwt.verify(accessToken, publicKey, (err, decode) => {
-        if(err){
-            console.error(`error verify:: ${err}`)
-        }else{
-            console.log(`decode verify:: ${decode}`)
-        }
-    })
+        const refreshToken = await jwt.sign( payload, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: '7 days'
+        })
 
-    console.log({accessToken, refreshToken})
-   
-    res.send('haha')
+        jwt.verify(accessToken, publicKey, (err, decode) => {
+            if(err){
+                console.error(`error verify:: ${err}`)
+            }else{
+                data = decode
+                console.log(`decode verify:: ${decode}`)
+            }
+        })
+
+        console.log({accessToken, refreshToken})
+    }
+    catch(err){
+        data = err.message
+    }
+
+    res.send(data)
 })
 
 app.post('/verify', async (req, res) => {
